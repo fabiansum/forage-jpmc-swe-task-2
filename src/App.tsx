@@ -7,7 +7,8 @@ import './App.css';
  * State declaration for <App />
  */
 interface IState {
-  data: ServerRespond[],
+  data: ServerRespond[];
+  showGraph: boolean;
 }
 
 /**
@@ -22,27 +23,46 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false
     };
+    this.getDataFromServer = this.getDataFromServer.bind(this);
   }
 
   /**
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    if (this.state.showGraph) {
+      return <Graph data={this.state.data}/>;
+  }
+    return null;
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
+  // getDataFromServer() {
+  //   DataStreamer.getData((serverResponds: ServerRespond[]) => {
+  //     // Update the state by creating a new array of data that consists of
+  //     // Previous data in the state and the new data from server
+  //     this.setState({ data: [...this.state.data, ...serverResponds] });
+  //   });
+  // }
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
-  }
+    this.setState({ showGraph: true });
 
+    setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:8080/query?id=0');
+        const data: ServerRespond[] = await response.json();
+        this.setState((prevState) => ({
+          data: [...prevState.data, ...data]
+        }));
+      } catch (error) {
+        console.error('Error fetching data: ', error);
+      }
+    }, 1000);
+  }
   /**
    * Render the App react component
    */
